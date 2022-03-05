@@ -298,6 +298,9 @@ input {
 	transition: opacity 0.2s ease-in-out;
 	-webkit-transition: opacity 0.2s ease-in-out;
 }
+
+
+
 .item:hover .ui-history-pin:hover {
     opacity: 1;
 }
@@ -309,6 +312,11 @@ input {
     margin: 5px;
 }
 .ui-use-tags {
+    min-width: 172px;
+    max-width: 344px;
+}
+
+.ui-use-companytags {
     min-width: 172px;
     max-width: 344px;
 }

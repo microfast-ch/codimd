@@ -23,6 +23,14 @@ import {
   saveStorageHistoryToServer
 } from './history'
 
+import {
+  getStorageCompanyNotes,
+  parseCompanyNotes,
+  getCompanyNotes,
+  parseServerToCompanyNotes,
+  parseStorageToCompanyNotes
+} from './company'
+
 import { saveAs } from 'file-saver'
 import List from 'list.js'
 import unescapeHTML from 'lodash/unescape'
@@ -32,7 +40,7 @@ require('./locale')
 require('../css/cover.css')
 require('../css/site.css')
 
-const options = {
+const historyOptions = {
   valueNames: ['id', 'text', 'timestamp', 'fromNow', 'time', 'tags', 'pinned'],
   item: `<li class="col-xs-12 col-sm-6 col-md-6 col-lg-4">
           <span class="id" style="display:none;"></span>
@@ -58,7 +66,31 @@ const options = {
     outerWindow: 1
   }]
 }
-const historyList = new List('history', options)
+const historyList = new List('history', historyOptions)
+const companyOptions = {
+  valueNames: ['id', 'text', 'timestamp', 'createdAt', 'tags'],
+  item: `<li class="col-xs-12 col-sm-6 col-md-6 col-lg-4">
+          <span class="id" style="display:none;"></span>
+          <a href="#">
+            <div class="item">
+              <div class="content">
+                <h4 class="text"></h4>
+                <p>
+                  <i><i class="fa fa-clock-o"></i> Created at </i><i class="createdAt"></i>
+                  <br>
+                  <i class="timestamp" style="display:none;"></i>
+                </p>
+                <p class="tags"></p>
+              </div>
+            </div>
+          </a>
+        </li>`,
+  page: 18,
+  pagination: [{
+    outerWindow: 1
+  }]
+}
+const companyList = new List('company', companyOptions)
 
 window.migrateHistoryFromTempCallback = pageInit
 setloginStateChangeEvent(pageInit)
@@ -75,8 +107,9 @@ function pageInit () {
       else $('.ui-avatar').prop('src', '').hide()
       $('.ui-name').html(data.name)
       $('.ui-signout').show()
-      $('.ui-history').click()
+      $('.ui-home').click()
       parseServerToHistory(historyList, parseHistoryCallback)
+      parseServerToCompanyNotes(companyList, parseCompanyCallback)
     },
     () => {
       $('.ui-signin').show()
@@ -86,6 +119,7 @@ function pageInit () {
       $('.ui-name').html('')
       $('.ui-signout').hide()
       parseStorageToHistory(historyList, parseHistoryCallback)
+      parseStorageToCompanyNotes(companyList, parseCompanyCallback)
     }
   )
 }
@@ -111,6 +145,12 @@ $('.ui-history').click(() => {
   if (!$('#history').is(':visible')) {
     $('.section:visible').hide()
     $('#history').fadeIn()
+  }
+})
+$('.ui-company').click(() => {
+  if (!$('#company').is(':visible')) {
+    $('.section:visible').hide()
+    $('#company').fadeIn()
   }
 })
 
@@ -168,6 +208,55 @@ function parseHistoryCallback (list, notehistory) {
   buildTagsFilter(filtertags)
 }
 
+function checkCompanyList () {
+  if ($('#company-list').children().length > 0) {
+    $('.pagination').show()
+    $('.ui-nocompany').hide()
+    $('.ui-import-from-browser').hide()
+  } else if ($('#company-list').children().length === 0) {
+    $('.pagination').hide()
+    $('.ui-nocompany').slideDown()
+    getStorageCompanyNotes(data => {
+      console.log(data)
+      if (data && data.length > 0 && getLoginState() && companyList.items.length === 0) {
+        $('.ui-import-from-browser').slideDown()
+      }
+    })
+  }
+}
+
+function parseCompanyCallback (list, companyNotes) {
+  checkCompanyList()
+  // sort by pinned then timestamp
+  list.sort('', {
+    sortFunction (a, b) {
+      const notea = a.values()
+      const noteb = b.values()
+      if (notea.timestamp > noteb.timestamp) {
+        return -1
+      } else if (notea.timestamp < noteb.timestamp) {
+        return 1
+      } else {
+        return 0
+      }
+    }
+  })
+  // parse filter tags
+  const filtertags = []
+  for (let i = 0, l = list.items.length; i < l; i++) {
+    const tags = list.items[i]._values.tags
+    if (tags && tags.length > 0) {
+      for (let j = 0; j < tags.length; j++) {
+        // push info filtertags if not found
+        let found = false
+        if (filtertags.includes(tags[j])) { found = true }
+        if (!found) { filtertags.push(tags[j]) }
+      }
+    }
+  }
+  buildCompanyTagsFilter(filtertags)
+}
+
 // update items whenever list updated
 historyList.on('updated', e => {
   for (let i = 0, l = e.items.length; i < l; i++) {
@@ -202,6 +291,31 @@ historyList.on('updated', e => {
   $('.ui-history-close').on('click', historyCloseClick)
   $('.ui-history-pin').off('click')
   $('.ui-history-pin').on('click', historyPinClick)
+})
+
+// update items whenever list updated
+companyList.on('updated', e => {
+  for (let i = 0, l = e.items.length; i < l; i++) {
+    const item = e.items[i]
+    if (item.visible()) {
+      const itemEl = $(item.elm)
+      const values = item._values
+      const a = itemEl.find('a')
+      const tagsEl = itemEl.find('.tags')
+      // parse link to element a
+      a.attr('href', `${serverurl}/${values.id}`)
+      // parse tags
+      const tags = values.tags
+      if (tags && tags.length > 0 && tagsEl.children().length <= 0) {
+        const labels = []
+        for (let j = 0; j < tags.length; j++) {
+          // push into the item label
+          labels.push(`<span class='label label-default'>${tags[j]}</span>`)
+        }
+        tagsEl.html(labels.join(' '))
+      }
+    }
+  }
 })
 
 function historyCloseClick (e) {
@@ -352,8 +466,8 @@ $('.ui-refresh-history').click(() => {
   const lastTags = $('.ui-use-tags').select2('val')
   $('.ui-use-tags').select2('val', '')
   historyList.filter()
-  const lastKeyword = $('.search').val()
-  $('.search').val('')
+  const lastKeyword = $('.historysearch').val()
+  $('.historysearch').val('')
   historyList.search()
   $('#history-list').slideUp('fast')
   $('.pagination').hide()
@@ -365,9 +479,32 @@ $('.ui-refresh-history').click(() => {
     $('.ui-use-tags').select2('val', lastTags)
     $('.ui-use-tags').trigger('change')
     historyList.search(lastKeyword)
-    $('.search').val(lastKeyword)
+    $('.historysearch').val(lastKeyword)
     checkHistoryList()
     $('#history-list').slideDown('fast')
+  })
+})
+
+$('.ui-refresh-company').click(() => {
+  const lastTags = $('.ui-use-companytags').select2('val')
+  $('.ui-use-companytags').select2('val', '')
+  companyList.filter()
+  const lastKeyword = $('.companysearch').val()
+  $('.companysearch').val('')
+  companyList.search()
+  $('#company-list').slideUp('fast')
+  $('.pagination').hide()
+
+  resetCheckAuth()
+  companyList.clear()
+  parseCompanyNotes(companyList, (list, companyNotes) => {
+    parseCompanyCallback(list, companyNotes)
+    $('.ui-use-companytags').select2('val', lastTags)
+    $('.ui-use-companytags').trigger('change')
+    companyList.search(lastKeyword)
+    $('.companysearch').val(lastKeyword)
+    checkCompanyList()
+    $('#company-list').slideDown('fast')
   })
 })
 
@@ -390,6 +527,18 @@ $('.ui-use-tags').select2({
     }
   }
 })
+
+let filterCompanyTags = []
+$('.ui-use-companytags').select2({
+  placeholder: $('.ui-use-companytags').attr('placeholder'),
+  multiple: true,
+  data () {
+    return {
+      results: filterCompanyTags
+    }
+  }
+})
+
 $('.select2-input').css('width', 'inherit')
 buildTagsFilter([])
 
@@ -402,6 +551,18 @@ function buildTagsFilter (tags) {
   }
   filtertags = tags
 }
+
+buildCompanyTagsFilter([])
+function buildCompanyTagsFilter (tags) {
+  for (let i = 0; i < tags.length; i++) {
+    tags[i] = {
+      id: i,
+      text: unescapeHTML(tags[i])
+    }
+  }
+  filterCompanyTags = tags
+}
+
 $('.ui-use-tags').on('change', function () {
   const tags = []
   const data = $(this).select2('data')
@@ -425,8 +586,35 @@ $('.ui-use-tags').on('change', function () {
   checkHistoryList()
 })
 
-$('.search').keyup(() => {
+$('.ui-use-companytags').on('change', function () {
+  const tags = []
+  const data = $(this).select2('data')
+  for (let i = 0; i < data.length; i++) { tags.push(data[i].text) }
+  if (tags.length > 0) {
+    companyList.filter(item => {
+      const values = item.values()
+      if (!values.tags) return false
+      let found = false
+      for (let i = 0; i < tags.length; i++) {
+        if (values.tags.includes(tags[i])) {
+          found = true
+          break
+        }
+      }
+      return found
+    })
+  } else {
+    companyList.filter()
+  }
+  checkCompanyList()
+})
+
+$('.historysearch').keyup(() => {
   checkHistoryList()
+})
+
+$('.companysearch').keyup(() => {
+  checkCompanyList()
 })
 
 $('.ui-export-user-data').click(function (e) {
