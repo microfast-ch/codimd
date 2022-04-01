@@ -21,7 +21,6 @@ jobs:
         image: codimd
         dockerfile: deployments/Dockerfile
         tags: codimd-${{ env.RELEASE_VERSION }}, codimd-latest
-        buildArgs: DATABASE_TYPE=${{ matrix.db-type }}
         registry: ghcr.io/${{ github.actor }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}

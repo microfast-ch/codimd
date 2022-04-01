@@ -1,5 +1,5 @@
-ARG BUILDPACK=hackmdio/buildpack:15.14.0-729b35a7
-ARG RUNTIME=hackmdio/runtime:15.14.0-729b35a7
+ARG RUNTIME=hackmdio/runtime:node-10-0baafb79
+ARG BUILDPACK=hackmdio/buildpack:node-10-0baafb79
 
 FROM $BUILDPACK as BUILD
 COPY --chown=hackmd:hackmd . .

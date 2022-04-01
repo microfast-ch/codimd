@@ -1,16 +1,16 @@
 version: "3"
 services:
   database:
-    image: postgres:14-alpine
+    image: postgres:11.6-alpine
     environment:
       - POSTGRES_USER=codimd
       - POSTGRES_PASSWORD=change_password
       - POSTGRES_DB=codimd
-    healthcheck:
-      test: [ "CMD", "pg_isready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # healthcheck:
+    #   test: [ "CMD", "pg_isready" ]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
     volumes:
       - "database-data:/var/lib/postgresql/data"
     restart: always
@@ -24,9 +24,9 @@ services:
     environment:
       - CMD_DB_URL=postgres://codimd:change_password@database/codimd
       - CMD_USECDN=false
-    depends_on:
-      database:
-        condition: service_healthy
+    # depends_on:
+      # database:
+        # condition: service_healthy
     ports:
       - "3000:3000"
     volumes:
