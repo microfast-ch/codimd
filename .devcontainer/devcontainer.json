@@ -5,7 +5,7 @@
 	"workspaceFolder": "/workspace",
 
 	// Set *default* container specific settings.json values on container create.
-	"settings": { 
+	"settings": {
 		"terminal.integrated.shell.linux": "/bin/zsh",
 		"sqltools.connections": [{
 			"name": "Container Database",
@@ -28,9 +28,6 @@
 		"mtxr.sqltools",
 		"mtxr.sqltools-driver-pg",
 		"eamodio.gitlens",
-		"codestream.codestream", 
-		"github.vscode-pull-request-github",
-		"cschleiden.vscode-github-actions",
 		"hbenl.vscode-mocha-test-adapter",
 		"hbenl.vscode-test-explorer"
 	],
