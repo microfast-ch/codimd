@@ -1,12 +1,10 @@
-ARG BUILDPACK=12-bullseye
-ARG RUNTIME=12-alpine
+ARG BUILDPACK=hackmdio/buildpack:15.14.0-729b35a7
+ARG RUNTIME=hackmdio/runtime:15.14.0-729b35a7
 
-FROM node:$BUILDPACK as FRONTEND_BUILD
-WORKDIR /app
-COPY . .
+FROM $BUILDPACK as BUILD
+COPY --chown=hackmd:hackmd . .
 ENV QT_QPA_PLATFORM=offscreen
 
-RUN git status
 RUN set -xe && \
   git reset --hard && \
   git clean -fx && \
@@ -14,22 +12,16 @@ RUN set -xe && \
   npm run build && \
   cp ./deployments/docker-entrypoint.sh ./ && \
   cp .sequelizerc.example .sequelizerc && \
-  rm -rf .git .gitignore .dockerignore .editorconfig .babelrc .mailmap .sequelizerc.example \
+  rm -rf .git .gitignore .travis.yml .dockerignore .editorconfig .babelrc .mailmap .sequelizerc.example \
   test docs contribute \
   package-lock.json webpack.prod.js webpack.htmlexport.js webpack.dev.js webpack.common.js \
   config.json.example README.md CONTRIBUTING.md AUTHORS node_modules
 
-FROM node:$BUILDPACK as BACKEND_BUILD
-#USER hackmd
+FROM $RUNTIME
+USER hackmd
 ENV QT_QPA_PLATFORM=offscreen
-WORKDIR /app
-COPY . .
+WORKDIR /home/hackmd/app
+COPY --chown=1500:1500 --from=BUILD /home/hackmd/app .
 RUN npm install --production && npm cache clean --force && rm -rf /tmp/{core-js-banners,phantomjs}
-
-FROM node:$RUNTIME
-WORKDIR /app
-COPY --from=BACKEND_BUILD /app/node_modules .
-COPY --from=FRONTEND_BUILD /app .
-COPY deployments/docker-entrypoint.sh .
 EXPOSE 3000
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+ENTRYPOINT ["/home/hackmd/app/docker-entrypoint.sh"]
