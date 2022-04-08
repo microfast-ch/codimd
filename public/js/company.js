@@ -13,33 +13,7 @@ import {
 
 import { checkIfAuth } from './lib/common/login'
 
-import { urlpath } from './lib/config'
-
-function renderCompanyNotes(title, tags) {
-  // console.debug(tags);
-  const id = urlpath ? location.pathname.slice(urlpath.length + 1, location.pathname.length).split('/')[1] : location.pathname.split('/')[1]
-  return {
-    id,
-    text: title,
-    time: moment().valueOf(),
-    tags
-  }
-}
-
-function generateCompanyNotes(title, tags, companyNotes) {
-  const info = renderCompanyNotes(title, tags)
-  // keep any pinned data
-  let pinned = false
-  for (let i = 0; i < companyNotes.length; i++) {
-    if (companyNotes[i].id === info.id && companyNotes[i].pinned) {
-      pinned = true
-      break
-    }
-  }
-  return companyNotes;
-}
-
-export function saveCompany(companyNotes) {
+export function saveCompany (companyNotes) {
   checkIfAuth(
     () => {
       saveCompanyNotesToStorage(companyNotes)
@@ -50,12 +24,12 @@ export function saveCompany(companyNotes) {
   )
 }
 
-function saveCompanyNotesToStorage(companyNotes) {
+function saveCompanyNotesToStorage (companyNotes) {
   store.set('notehistory', JSON.stringify(companyNotes))
 }
 
 // used for outer
-export function getCompanyNotes(callback) {
+export function getCompanyNotes (callback) {
   checkIfAuth(
     () => {
       getServerCompanyNotes(callback)
@@ -66,7 +40,7 @@ export function getCompanyNotes(callback) {
   )
 }
 
-function getServerCompanyNotes(callback) {
+function getServerCompanyNotes (callback) {
   $.get(`${serverurl}/api/notes`)
     .done(data => {
       if (data.notes) {
@@ -78,7 +52,7 @@ function getServerCompanyNotes(callback) {
     })
 }
 
-export function getStorageCompanyNotes(callback) {
+export function getStorageCompanyNotes (callback) {
   let data = store.get('companynotes')
   if (data) {
     if (typeof data === 'string') { data = JSON.parse(data) }
@@ -88,7 +62,7 @@ export function getStorageCompanyNotes(callback) {
   callback([])
 }
 
-export function parseCompanyNotes(list, callback) {
+export function parseCompanyNotes (list, callback) {
   checkIfAuth(
     () => {
       parseServerToCompanyNotes(list, callback)
@@ -99,7 +73,7 @@ export function parseCompanyNotes(list, callback) {
   )
 }
 
-export function parseServerToCompanyNotes(list, callback) {
+export function parseServerToCompanyNotes (list, callback) {
   $.get(`${serverurl}/api/notes`)
     .done(data => {
       if (data.notes) {
@@ -111,7 +85,7 @@ export function parseServerToCompanyNotes(list, callback) {
     })
 }
 
-export function parseStorageToCompanyNotes(list, callback) {
+export function parseStorageToCompanyNotes (list, callback) {
   let data = store.get('companynotes')
   if (data) {
     if (typeof data === 'string') { data = JSON.parse(data) }
@@ -120,7 +94,7 @@ export function parseStorageToCompanyNotes(list, callback) {
   parseToCompanyNotes(list, [], callback)
 }
 
-function parseToCompanyNotes(list, companyNotes, callback) {
+function parseToCompanyNotes (list, companyNotes, callback) {
   if (!callback) return
   else if (!list || !companyNotes) callback(list, companyNotes)
   else if (companyNotes && companyNotes.length > 0) {

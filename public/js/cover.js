@@ -26,7 +26,6 @@ import {
 import {
   getStorageCompanyNotes,
   parseCompanyNotes,
-  getCompanyNotes,
   parseServerToCompanyNotes,
   parseStorageToCompanyNotes
 } from './company'
