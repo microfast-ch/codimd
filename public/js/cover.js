@@ -67,7 +67,7 @@ const historyOptions = {
 }
 const historyList = new List('history', historyOptions)
 const companyOptions = {
-  valueNames: ['id', 'text', 'timestamp', 'createdAt', 'tags'],
+  valueNames: ['id', 'text', 'timestamp', 'createdAt', 'tags', 'owner', 'lastchangeuser'],
   item: `<li class="col-xs-12 col-sm-6 col-md-6 col-lg-4">
           <span class="id" style="display:none;"></span>
           <a href="#">
@@ -76,6 +76,10 @@ const companyOptions = {
                 <h4 class="text"></h4>
                 <p>
                   <i><i class="fa fa-clock-o"></i> Created at </i><i class="createdAt"></i>
+                  <br>
+                  <i><i class="fa fa-user"></i> Owner </i><i class="owner"></i>
+                  <br>
+                  <i><i class="fa fa-user-plus"></i> Last modified by </i><i class="lastchangeuser"></i>
                   <br>
                   <i class="timestamp" style="display:none;"></i>
                 </p>

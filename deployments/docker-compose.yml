@@ -18,9 +18,10 @@ services:
     # you can use image or custom build below,
     # if you need CJK character with exported PDF files,
     # please change the image tag with `cjk` postfix version
-    build:
-      context: ..
-      dockerfile: ./deployments/Dockerfile
+    # build:
+    #   context: ..
+    #   dockerfile: ./deployments/Dockerfile
+    image: ghcr.io/microfast-ch/codimd:v2.5.0
     environment:
       - CMD_DB_URL=postgres://codimd:change_password@database/codimd
       - CMD_USECDN=false
